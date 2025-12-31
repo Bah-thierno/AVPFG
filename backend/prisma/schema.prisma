@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Admin Users (Dashboard Access)
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  role          Role     @default(CITY_MANAGER)
+  cityId        String?  // Linked City ID for managers
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum Role {
+  SUPER_ADMIN
+  CITY_MANAGER
+}
+
+// Community Members (Public Website)
+model PublicUser {
+  id          String   @id @default(uuid())
+  matricule   String   @unique
+  name        String
+  email       String?
+  phone       String?
+  cityId      String
+  role        CommunityRole @default(VOLUNTEER)
+  photo       String?
+  bio         String?
+  joinDate    DateTime @default(now())
+  isActive    Boolean  @default(true)
+}
+
+enum CommunityRole {
+  VOLUNTEER
+  MEMBER
+  DONOR
+}
+
+// Cities (Rich Content)
+model City {
+  id              String   @id // e.g., 'kaloum', 'boke'
+  name            String
+  region          String
+  prefecture      String
+  description     String?
+  population      Int?
+  
+  // JSON fields for rich data
+  founders        Json?    // [{ name, role, photo, bio }]
+  pastBureaus     Json?    // [{ period, members: [] }]
+  media           Json?    // { heroImage, before, after }
+  stats           Json?    // { agents, tons, etc }
+  socials         Json?    
+  
+  updatedAt       DateTime @updatedAt
+}
+
+// Forms
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  status    MessageStatus @default(UNREAD)
+  createdAt DateTime @default(now())
+}
+
+enum MessageStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+model VolunteerApplication {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  phone     String
+  cityId    String
+  motivation String
+  status    ApplicationStatus @default(PENDING)
+  createdAt DateTime @default(now())
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
