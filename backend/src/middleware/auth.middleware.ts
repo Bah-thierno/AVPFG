@@ -7,12 +7,10 @@ interface UserPayload {
     cityId?: string;
 }
 
-declare global {
-    namespace Express {
-        interface Request {
-            user?: UserPayload;
-        }
-    }
+declare module 'express' {
+  interface Request {
+    user?: UserPayload;
+  }
 }
 
 export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
