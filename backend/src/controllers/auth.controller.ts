@@ -73,3 +73,27 @@ export const register = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Erreur création utilisateur' });
     }
 };
+
+// Init admin endpoint - only allowed with INIT_TOKEN from env
+export const initAdmin = async (req: Request, res: Response) => {
+    try {
+        const initToken = process.env.INIT_TOKEN;
+        const provided = req.headers['x-init-token'] || req.body.initToken;
+        if (!initToken || provided !== initToken) {
+            return res.status(403).json({ message: 'Token d\'initialisation invalide' });
+        }
+
+        const { email, password } = req.body;
+        if (!email || !password) return res.status(400).json({ message: 'Email et mot de passe requis' });
+
+        const existing = await prisma.user.findUnique({ where: { email } });
+        if (existing) return res.status(400).json({ message: 'Utilisateur existe déjà' });
+
+        const passwordHash = await bcrypt.hash(password, 10);
+        const admin = await prisma.user.create({ data: { email, passwordHash, role: 'SUPER_ADMIN' } });
+        res.status(201).json({ message: 'Super admin créé', id: admin.id });
+    } catch (error) {
+        console.error('Init admin error:', error);
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
+};
